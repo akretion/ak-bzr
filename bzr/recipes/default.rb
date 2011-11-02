@@ -1,3 +1,5 @@
+if node[:platform_version].to_f < 11.10
+
 package "python-software-properties" do
   action :install
 end
@@ -25,4 +27,8 @@ end
 package "bzrtools" do
   action :nothing
   options "--force-yes"
+end
+
+else
+  package "bzr"
 end
