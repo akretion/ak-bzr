@@ -32,3 +32,28 @@ end
 else
   package "bzr"
 end
+
+directory "/home/#{node[:openerp][:prod][:unix_user]}/.bazaar" do
+  owner node[:openerp][:prod][:unix_user]
+  group node[:openerp][:group_unix]
+  action :create
+end
+
+directory "/home/#{node[:openerp][:dev][:unix_user]}/.bazaar" do
+  owner node[:openerp][:dev][:unix_user]
+  group node[:openerp][:group_unix]
+  action :create
+end
+
+template "/home/#{node[:openerp][:prod][:unix_user]}/.bazaar/bazaar.conf" do
+  owner node[:openerp][:prod][:unix_user]
+  group node[:openerp][:group_unix]
+  source "bazaar.conf.erb"
+end
+
+template "/home/#{node[:openerp][:dev][:unix_user]}/.bazaar/bazaar.conf" do
+  owner node[:openerp][:dev][:unix_user]
+  group node[:openerp][:group_unix]
+  source "bazaar.conf.erb"
+end
+
