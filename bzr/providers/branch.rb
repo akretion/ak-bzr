@@ -5,10 +5,24 @@ require 'fileutils'
       
 include Chef::Mixin::ShellOut
 
-      def find_current_revision
-        Chef::Log.debug("#{@new_resource} finding current bzr revision")
-        if ::File.exist?(::File.join(cwd, ".bzr"))
-          return shell_out!('bzr revno', :cwd => cwd).stdout.strip #FIXME, may be rev id is better, see git provider
+      def find_current_revision(opts)
+        Chef::Log.info("#{@new_resource} finding current equivalent bzr revision")
+        if ::File.exist?(::File.join(@new_resource.destination, ".bzr"))
+          logs = shell_out!('bzr log -l 10 --line', opts).stdout
+          matches = /parent rev #[0-9]+/.match(logs)
+          revno = matches && matches[0]
+          if revno
+            revno = revno.gsub("parent rev #", "")
+          else
+            if not (logs.index("Akretion Bot") || logs.index("[CUS]"))
+              revno = shell_out!('bzr revno', opts).stdout.strip
+              Chef::Log.info("Unable to know parent revision from logs")
+              Chef::Log.info("But assuming local revno #{revno} because no customization found")
+            else
+              Chef::Log.info("Unable to know parent revision") 
+            end
+          end
+          return revno
         else
           return nil
         end
@@ -36,38 +50,52 @@ include Chef::Mixin::ShellOut
         if target_dir_non_existent_or_empty?
 
           if @new_resource.tarball #eventually we prepared a tarball to speed up the download
+            Chef::Log.info("Downloading #{@new_resource.tarball} for bzr branch #{@new_resource.destination}")
             opts[:cwd] = "/tmp"
             shell_out!("wget #{@new_resource.tarball}", opts)
             download = @new_resource.tarball.split("/").last #FIXME brittle!
             target = @new_resource.destination.split("/").last
             dir = @new_resource.destination.split("/#{target}")[0]
-            puts "dir"
-            p dir
+            Chef::Log.info("Deflating /tmp/#{download} archive to #{@new_resource.destination}")
             shell_out!("tar -jxvf /tmp/#{download} -C #{dir}", opts)
-            fetch_updates(opts)
+            opts[:cwd] = @new_resource.destination
+            fetch_updates(opts, nil)
           else
             clone_cmd = "bzr branch --stacked #{@new_resource.repository} #{@new_resource.destination}"
+            Chef::Log.info(clone_cmd)
             shell_out!(clone_cmd, opts)
             @new_resource.updated_by_last_action(true)
           end
         else
-          Chef::Log.debug "#{@new_resource} checkout destination #{@new_resource.destination} already exists or is a non-empty directory"
+          Chef::Log.info "#{@new_resource} checkout destination #{@new_resource.destination} already exists or is a non-empty directory"
         end
       end
       
-      def fetch_updates(opts)
-        opts[:cwd] = @new_resource.destination
+      def fetch_updates(opts, current_rev)
         #TODO test if modified/added/removed with bzr status; if yes send email + do nothing
 
-#       remote_revno = shell_out!("bzr revno #{@new_resource.repository}", opts).stdout.strip
-        #TODO look at last commit msg to search for MERGE + rev, eventually compare to avoid merge
-        cmd = shell_out!("bzr merge #{@new_resource.repository}", opts) #TODO location
-        puts "******"
-        p cmd
-        #TODO detect if merge failed, then rollback + email
-        unless cmd.stderr.index('Nothing to do')
-          cmd = shell_out!("bzr commit -m 'merged with rev TODO'", opts)
-          @new_resource.updated_by_last_action(true)
+        if current_rev && @new_resource.revision && @new_resource.revision != "HEAD" && current_rev >= @new_resource.revision
+          Chef::Log.info("not updating because current rev #{current_rev} >= target rev #{@new_resource.revision}")
+          @new_resource.updated_by_last_action(false)
+        else
+          parent_revno = shell_out!("bzr revno #{@new_resource.repository}", opts).stdout.strip
+
+          if current_rev && (current_rev.to_i == parent_revno.to_i)
+            Chef::Log.info("Local rev #{current_rev} is already up to date")
+            @new_resource.updated_by_last_action(false)
+          else
+            Chef::Log.info("upgrading current_rev #{current_rev.to_i} to parent rev #{parent_revno.to_i}")
+            merge_cmd = "bzr merge #{@new_resource.repository} -r #{parent_revno}"
+            Chef::Log.info(merge_cmd)
+            cmd = shell_out!(merge_cmd, opts)
+            Chef::Log.info(cmd.stdout)
+            #TODO detect if merge failed, then rollback + email
+            unless cmd.stderr.index('Nothing to do')
+              cmd = shell_out!("bzr commit -m 'merged with parent rev ##{parent_revno}'", opts)
+              @new_resource.updated_by_last_action(true)
+            end
+          end
+
         end
       end
 
@@ -77,13 +105,20 @@ include Chef::Mixin::ShellOut
         opts = {}
         opts[:user] = @new_resource.user if @new_resource.user
         opts[:group] = @new_resource.group if @new_resource.group
-        opts[:environment] = {'USER' => opts[:user], 'HOME' => "/home/#{opts[:user]}"}
+        opts[:environment] = {'USER' => opts[:user], 'HOME' => "/home/#{opts[:user]}", 'LC_ALL'=>nil}
 
         if existing_bzr_clone?
-          fetch_updates(opts)
+          opts[:cwd] = @new_resource.destination
+          current_rev = find_current_revision(opts)
+          fetch_updates(opts, current_rev)
         else
           action_checkout(opts)
           @new_resource.updated_by_last_action(true)
+        end
+
+        if @new_resource.is_addons_pack #OpenERP specific
+          opts[:cwd] = @new_resource.destination
+          shell_out!("ak-addonize", opts)
         end
       end
       
