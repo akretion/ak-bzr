@@ -1,13 +1,12 @@
 # example of bzr_branch resource:
 #
-#bzr_branch "test" do
-#  repo "lp:openobject-serveri/6.1"
-#  destination "/opt/openerp/test2/server"
-#  tarball "#{node[:openerp][:bzr][:snaphot_repo]}server.tar.bz2"
-#  revision "HEAD"
-#  action :sync
+#bzr_branch "#{node[:openerp][:home]}/prod/pt-br-localiz" do
+#  repo "lp:openerp.pt-br-localiz#HEAD"
+#  action :sync 
+#  is_addons_pack true
 #  user node[:openerp][:super_user][:unix_user]
 #  group node[:openerp][:group_unix]
+#  notifies :run, resources(:execute => "openerp-prod-restart-update")
 #end
 
 
@@ -28,3 +27,15 @@ attribute :cwd,        :kind_of => String
 alias :branch :revision
 alias :reference :revision
 alias :repo :repository
+
+def destination=(dest)
+  @destination = dest
+end
+
+def repository=(rep)
+  @repository = rep
+end
+
+def revision=(rev)
+  @revision = rev
+end
