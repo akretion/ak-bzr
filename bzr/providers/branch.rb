@@ -113,6 +113,11 @@ action :sync do
   @new_resource.destination = @new_resource.name
   @new_resource.repository, @new_resource.revision = split_repo_rev(@new_resource.repo, @new_resource.revision)
 
+  #update param to force update
+  if @new_resource.update && (@new_resource.update.strip == "all" || @new_resource.destination.split("/").last.strip == @new_resource.update.strip)
+    @new_resource.revision = "HEAD"
+  end
+
   assert_target_directory_valid!
 
   opts = {}
@@ -133,7 +138,7 @@ action :sync do
 
   if @new_resource.is_addons_pack #OpenERP specific
     opts[:cwd] = @new_resource.destination
-    shell_out!("ak-addonize", opts)
+    shell_out!("/usr/local/bin/ak-addonize", opts)
   end
 end
 

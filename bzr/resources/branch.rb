@@ -19,6 +19,7 @@ attribute :revision,        :kind_of => String
 attribute :autosync,        :kind_of => String #no, weekly, daily...
 attribute :tarball,        :kind_of => String
 attribute :is_addons_pack,        :kind_of => [TrueClass, FalseClass]
+attribute :update,    :kind_of => [String] #param to force update
 
 attribute :user,        :kind_of => [String, Integer]
 attribute :group,        :kind_of => [String, Integer]
@@ -38,4 +39,8 @@ end
 
 def revision=(rev)
   @revision = rev
+end
+
+def update=(update)
+  @update = update
 end
