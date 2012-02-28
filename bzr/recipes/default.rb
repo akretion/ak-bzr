@@ -1,3 +1,6 @@
+package "zip"
+package "bzip2"
+
 if node[:platform_version].to_f < 11.10
 
 package "python-software-properties" do
