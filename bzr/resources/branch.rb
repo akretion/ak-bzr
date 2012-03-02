@@ -19,7 +19,11 @@ attribute :revision,        :kind_of => String
 attribute :autosync,        :kind_of => String #no, weekly, daily...
 attribute :tarball,        :kind_of => String
 attribute :is_addons_pack,        :kind_of => [TrueClass, FalseClass]
-attribute :update,    :kind_of => [String] #param to force update
+
+attribute :reference_merge,    :kind_of => [String] #param to force update
+attribute :parent_merge,    :kind_of => [String]
+attribute :parent_push,    :kind_of => [String]
+attribute :parent,    :kind_of => [String]
 
 attribute :user,        :kind_of => [String, Integer]
 attribute :group,        :kind_of => [String, Integer]
@@ -41,6 +45,14 @@ def revision=(rev)
   @revision = rev
 end
 
-def update=(update)
-  @update = update
+def reference_merge=(ref_merge)
+  @reference_merge = ref_merge
+end
+
+def parent_merge=(parent_merge)
+  @parent_merge = parent_push
+end
+
+def parent_push=(parent_push)
+  @parent_push = parent_push
 end

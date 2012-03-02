@@ -49,16 +49,28 @@ def action_checkout(opts)
   assert_target_directory_valid!
 
   if target_dir_non_existent_or_empty?
+    target = @new_resource.destination.split("/").last
 
-    if @new_resource.tarball #eventually we prepared a tarball to speed up the download
+    if @new_resource.parent && @new_resource.parent != "" #TODO lightweight symlink option too
+      #TODO be able to do it via SSH!      
+      full_parent = "#{@new_resource.parent}/#{target}"
+      shell_out!("cp -r #{full_parent} #{@new_resource.destination}", opts)
+      if ::File.exist?("#{@new_resource.destination}/.bzr")
+        branch_conf = """push_location = #{full_parent}
+stacked_on_location = #{full_parent}
+parent_location = #{full_parent}"""
+        ::File.open("#{full_parent}/.bzr/branch/branch.conf", 'w') { |f| f.write(branch_conf) }
+      end
+      shell_out!("chown -R #{@new_resource.user} #{@new_resource.destination}", opts)
+
+    elsif @new_resource.tarball #eventually we prepared a tarball to speed up the download
       Chef::Log.info("Downloading #{@new_resource.tarball} for bzr branch #{@new_resource.destination}")
       opts[:cwd] = "/tmp"
       shell_out!("wget #{@new_resource.tarball}", opts)
       download = @new_resource.tarball.split("/").last #FIXME brittle!
-      target = @new_resource.destination.split("/").last
-      dir = @new_resource.destination.split("/#{target}")[0]
+      parent_dir = @new_resource.destination.split("/#{target}")[0]
       Chef::Log.info("Deflating /tmp/#{download} archive to #{@new_resource.destination}")
-      shell_out!("tar -jxvf /tmp/#{download} -C #{dir}", opts)
+      shell_out!("tar -jxvf /tmp/#{download} -C #{parent_dir}", opts)
       opts[:cwd] = @new_resource.destination
       fetch_updates(opts, nil)
     else
@@ -114,7 +126,7 @@ action :sync do
   @new_resource.repository, @new_resource.revision = split_repo_rev(@new_resource.repo, @new_resource.revision)
 
   #update param to force update
-  if @new_resource.update && (@new_resource.update.strip == "all" || @new_resource.destination.split("/").last.strip == @new_resource.update.strip)
+  if @new_resource.reference_merge
     @new_resource.revision = "HEAD"
   end
 
