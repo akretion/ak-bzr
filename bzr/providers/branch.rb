@@ -59,7 +59,7 @@ def action_checkout(opts)
         branch_conf = """push_location = #{full_parent}
 stacked_on_location = #{full_parent}
 parent_location = #{full_parent}"""
-        ::File.open("#{full_parent}/.bzr/branch/branch.conf", 'w') { |f| f.write(branch_conf) }
+        ::File.open("#{@new_resource.destination}/.bzr/branch/branch.conf", 'w') { |f| f.write(branch_conf) }
       end
       shell_out!("chown -R #{@new_resource.user} #{@new_resource.destination}", opts)
 

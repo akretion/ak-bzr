@@ -20,10 +20,10 @@ attribute :autosync,        :kind_of => String #no, weekly, daily...
 attribute :tarball,        :kind_of => String
 attribute :is_addons_pack,        :kind_of => [TrueClass, FalseClass]
 
-attribute :reference_merge,    :kind_of => [String] #param to force update
-attribute :parent_merge,    :kind_of => [String]
-attribute :parent_push,    :kind_of => [String]
-attribute :parent,    :kind_of => [String]
+attribute :reference_merge,    :kind_of => [TrueClass, FalseClass] #param to force update
+attribute :parent_merge,    :kind_of => [TrueClass, FalseClass]
+attribute :parent_push,    :kind_of => [TrueClass, FalseClass]
+attribute :parent,    :kind_of => String
 
 attribute :user,        :kind_of => [String, Integer]
 attribute :group,        :kind_of => [String, Integer]
