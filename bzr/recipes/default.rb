@@ -1,5 +1,9 @@
-package "zip"
-package "bzip2"
+package "zip" do
+  options "--force-yes"
+end
+package "bzip2" do
+    options "--force-yes"
+end
 
 if node[:platform_version].to_f < 11.10
 
@@ -52,11 +56,13 @@ template "/home/#{node[:openerp][:prod][:unix_user]}/.bazaar/bazaar.conf" do
   owner node[:openerp][:prod][:unix_user]
   group node[:openerp][:group_unix]
   source "bazaar.conf.erb"
+  action :create
 end
 
 template "/home/#{node[:openerp][:dev][:unix_user]}/.bazaar/bazaar.conf" do
   owner node[:openerp][:dev][:unix_user]
   group node[:openerp][:group_unix]
   source "bazaar.conf.erb"
+  action :create
 end
 
