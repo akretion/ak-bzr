@@ -66,7 +66,7 @@ parent_location = #{full_parent}"""
     elsif @new_resource.tarball #eventually we prepared a tarball to speed up the download
       Chef::Log.info("Downloading #{@new_resource.tarball} for bzr branch #{@new_resource.destination}")
       opts[:cwd] = "/tmp"
-      if @new_resource.tarball[0..4] == 'http'
+      if @new_resource.tarball[0..3] == 'http'
         shell_out!("wget #{@new_resource.tarball}", opts)
       else
         shell_out!("cp #{@new_resource.tarball} .", opts)
