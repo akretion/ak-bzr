@@ -152,10 +152,10 @@ action :sync do
     @new_resource.updated_by_last_action(true)
   end
 
-  if @new_resource.is_addons_pack #OpenERP specific
-    opts[:cwd] = @new_resource.destination
-    shell_out!("/usr/local/bin/ak-addonize", opts)
-  end
+  #if @new_resource.is_addons_pack #OpenERP specific
+  #  opts[:cwd] = @new_resource.destination
+  #  shell_out!("/usr/local/bin/ak-addonize", opts)
+  #end
 end
 
 def current_revision_matches_target_revision?
