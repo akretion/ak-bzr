@@ -45,24 +45,30 @@ def target_dir_non_existent_or_empty?
   !::File.exist?(@new_resource.destination) || Dir.entries(@new_resource.destination).sort == ['.','..']
 end
 
+def make_conf(parent=nil)
+  if ::File.exist?("#{@new_resource.destination}/.bzr")
+    branch_conf = """push_location = #{parent || @new_resource.repository}
+parent_location = #{parent || @new_resource.repository}"""
+    branch_conf << "\nstacked_on_location = #{@new_resource.stacked_on}" if @new_resource.stacked_on
+    ::File.open("#{@new_resource.destination}/.bzr/branch/branch.conf", 'w') { |f| f.write(branch_conf) }
+  end
+end
+
 def action_checkout(opts)
   assert_target_directory_valid!
 
   if target_dir_non_existent_or_empty?
     target = @new_resource.destination.split("/").last
 
+    #SLAVE TEST SERVER:
     if @new_resource.parent && @new_resource.parent != "" #TODO lightweight symlink option too
       #TODO be able to do it via SSH!      
       full_parent = "#{@new_resource.parent}/#{target}"
       shell_out!("cp -r #{full_parent} #{@new_resource.destination}", opts)
-      if ::File.exist?("#{@new_resource.destination}/.bzr")
-        branch_conf = """push_location = #{full_parent}
-stacked_on_location = #{full_parent}
-parent_location = #{full_parent}"""
-        ::File.open("#{@new_resource.destination}/.bzr/branch/branch.conf", 'w') { |f| f.write(branch_conf) }
-      end
+      make_conf(full_parent)
       shell_out!("chown -R #{@new_resource.user} #{@new_resource.destination}", opts)
 
+    #TARBALL:
     elsif @new_resource.tarball #eventually we prepared a tarball to speed up the download
       Chef::Log.info("Downloading #{@new_resource.tarball} for bzr branch #{@new_resource.destination}")
       opts[:cwd] = "/tmp"
@@ -76,11 +82,16 @@ parent_location = #{full_parent}"""
       Chef::Log.info("Deflating /tmp/#{download} archive to #{@new_resource.destination}")
       shell_out!("tar -jxvf /tmp/#{download} -C #{parent_dir}", opts)
       opts[:cwd] = @new_resource.destination
+      make_conf()
       fetch_updates(opts, nil)
+
+    #NORMAL BRANCH:
     else
-      clone_cmd = "bzr branch --stacked #{@new_resource.repository} #{@new_resource.destination}"
+      clone_cmd = "bzr branch --stacked #{@new_resource.stacked_on || @new_resource.repository} #{@new_resource.destination}"
+      #TODO make_conf() ?
       Chef::Log.info(clone_cmd)
       shell_out!(clone_cmd, opts)
+      make_conf()
       @new_resource.updated_by_last_action(true)
     end
   else
