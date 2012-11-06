@@ -60,12 +60,19 @@ def action_checkout(opts)
   if target_dir_non_existent_or_empty?
     target = @new_resource.destination.split("/").last
 
-    #SLAVE TEST SERVER:
-    if @new_resource.parent && @new_resource.parent != "" #TODO lightweight symlink option too
+    #SLAVE/STAGING/DEV SERVER:
+    if @new_resource.parent && @new_resource.parent != ""
       #TODO be able to do it via SSH!      
       full_parent = "#{@new_resource.parent}/#{target}"
-      shell_out!("cp -r #{full_parent} #{@new_resource.destination}", opts)
-      make_conf(full_parent)
+      shell_out!("mkdir #{@new_resource.destination}", opts) unless ::File.exist?(@new_resource.destination)
+      if @new_resource.parent.index("@") #slave of a remote master
+        shell_out!("scp -r -C #{full_parent}/.bzr #{@new_resource.destination}", opts)
+        make_conf("bzr+ssh://#{full_parent.split("@")[1].gsub(":", "")}")
+      else #local master
+        shell_out!("cp -r #{full_parent}/.bzr #{@new_resource.destination}", opts)
+        make_conf(full_parent)
+      end
+      shell_out!("bzr revert", opts.merge({:cwd => @new_resource.destination}))
       shell_out!("chown -R #{@new_resource.user} #{@new_resource.destination}", opts)
 
     #TARBALL:
