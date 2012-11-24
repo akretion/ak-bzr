@@ -47,9 +47,20 @@ end
 
 def make_conf(parent=nil)
   if ::File.exist?("#{@new_resource.destination}/.bzr")
+    stack_on_location = false
+    if @new_resource.stacked_on
+      stack_on_location = @new_resource.stacked_on
+    else
+      ::File.open("#{@new_resource.destination}/.bzr/branch/branch.conf", "r") do |infile|
+        while (line = infile.gets)
+          stack_on_location = line.split("stacked_on_location")[1].gsub("=", "").strip() if line.index("stacked_on_location")
+        end
+      end
+    end
+
     branch_conf = """push_location = #{parent || @new_resource.repository}
 parent_location = #{parent || @new_resource.repository}"""
-    branch_conf << "\nstacked_on_location = #{@new_resource.stacked_on}" if @new_resource.stacked_on
+    branch_conf << "\nstacked_on_location = #{stack_on_location}" if stack_on_location
     ::File.open("#{@new_resource.destination}/.bzr/branch/branch.conf", 'w') { |f| f.write(branch_conf) }
   end
 end
@@ -66,13 +77,16 @@ def action_checkout(opts)
       full_parent = "#{@new_resource.parent}/#{target}"
       shell_out!("mkdir #{@new_resource.destination}", opts) unless ::File.exist?(@new_resource.destination)
       if @new_resource.parent.index("@") #slave of a remote master
-        shell_out!("scp -r -C #{full_parent}/.bzr #{@new_resource.destination}", opts)
-        make_conf("bzr+ssh://#{full_parent.split("@")[1].gsub(":", "")}")
+        shell_out!("scp -r -o ConnectTimeout=3600 -C #{full_parent}/.bzr #{@new_resource.destination}", opts)
+        make_conf("bzr+ssh://erp_dev@#{full_parent.split("@")[1].gsub(":", "")}") #TODO make erp_dev a parameter eventually
       else #local master
         shell_out!("cp -r #{full_parent}/.bzr #{@new_resource.destination}", opts)
         make_conf(full_parent)
       end
-      shell_out!("bzr revert", opts.merge({:cwd => @new_resource.destination}))
+      begin
+        shell_out!("bzr revert", opts.merge({:cwd => @new_resource.destination}))
+      rescue #FIXME bzr branch can be crappy occasionnally, but we don't wan't to bloack everything
+      end
       shell_out!("chown -R #{@new_resource.user} #{@new_resource.destination}", opts)
 
     #TARBALL:
@@ -170,10 +184,6 @@ action :sync do
     @new_resource.updated_by_last_action(true)
   end
 
-  #if @new_resource.is_addons_pack #OpenERP specific
-  #  opts[:cwd] = @new_resource.destination
-  #  shell_out!("/usr/local/bin/ak-addonize", opts)
-  #end
 end
 
 def current_revision_matches_target_revision?
