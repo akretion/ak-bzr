@@ -3,7 +3,6 @@
 #bzr_branch "#{node[:openerp][:home]}/prod/pt-br-localiz" do
 #  repo "lp:openerp.pt-br-localiz#HEAD"
 #  action :sync 
-#  is_addons_pack true
 #  user node[:openerp][:super_user][:unix_user]
 #  group node[:openerp][:group_unix]
 #  notifies :run, resources(:execute => "openerp-prod-restart-update")
@@ -17,8 +16,7 @@ attribute :repo,        :kind_of => String
 attribute :repository,        :kind_of => String
 attribute :revision,        :kind_of => String
 attribute :autosync,        :kind_of => String #no, weekly, daily...
-attribute :tarball,        :kind_of => String
-attribute :is_addons_pack,        :kind_of => [TrueClass, FalseClass]
+attribute :tarball,        :kind_of => [String, FalseClass]
 
 attribute :reference_merge,    :kind_of => [TrueClass, FalseClass] #param to force update
 attribute :parent_merge,    :kind_of => [TrueClass, FalseClass]
