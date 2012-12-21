@@ -134,14 +134,19 @@ def fetch_updates(opts, current_rev)
       @new_resource.updated_by_last_action(false)
     else
       Chef::Log.info("upgrading current_rev #{current_rev.to_i} to parent rev #{parent_revno.to_i}")
-      merge_cmd = "bzr merge #{@new_resource.repository} -r #{parent_revno}"
-      Chef::Log.info(merge_cmd)
-      cmd = shell_out!(merge_cmd, opts)
-      Chef::Log.info(cmd.stdout)
-      #TODO detect if merge failed, then rollback + email
-      unless cmd.stderr.index('Nothing to do')
-        cmd = shell_out!("bzr commit -m 'merged with parent rev ##{parent_revno}'", opts)
-        @new_resource.updated_by_last_action(true)
+      cmd = Mixlib::ShellOut.new("bzr pull --overwrite", opts)
+      cmd.run_command
+      if cmd.stderr.index('branches have diverged')
+        merge_cmd = "bzr merge #{@new_resource.repository} -r #{parent_revno}"
+        Chef::Log.info(merge_cmd)
+        cmd = Mixlib::ShellOut.new(merge_cmd, opts)
+        cmd.run_command
+        Chef::Log.info(cmd.stdout)
+        #TODO detect if merge failed, then rollback + email
+        unless cmd.stderr.index('Nothing to do')
+          cmd = shell_out!("bzr commit -m 'merged with parent rev ##{parent_revno}'", opts)
+          @new_resource.updated_by_last_action(true)
+        end
       end
     end
 
