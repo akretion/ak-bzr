@@ -73,7 +73,6 @@ def action_checkout(opts)
 
     #SLAVE/STAGING/DEV SERVER:
     if @new_resource.parent && @new_resource.parent != ""
-      #TODO be able to do it via SSH!      
       full_parent = "#{@new_resource.parent}/#{target}"
       shell_out!("mkdir #{@new_resource.destination}", opts) unless ::File.exist?(@new_resource.destination)
       if @new_resource.parent.index("@") #slave of a remote master
@@ -108,7 +107,7 @@ def action_checkout(opts)
 
     #NORMAL BRANCH:
     else
-      clone_cmd = "bzr branch --stacked #{@new_resource.stacked_on || @new_resource.repository} #{@new_resource.destination}"
+      clone_cmd = "bzr branch --stacked --use-existing-dir #{@new_resource.stacked_on || @new_resource.repository} #{@new_resource.destination}"
       #TODO make_conf() ?
       Chef::Log.info(clone_cmd)
       shell_out!(clone_cmd, opts)
