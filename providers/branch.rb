@@ -48,8 +48,8 @@ end
 def make_conf(parent=nil)
   if ::File.exist?("#{@new_resource.destination}/.bzr")
     stack_on_location = false
-    if @new_resource.stacked_on
-      stack_on_location = @new_resource.stacked_on
+    if @new_resource.stacked_on_location
+      stack_on_location = @new_resource.stacked_on_location
     else
       ::File.open("#{@new_resource.destination}/.bzr/branch/branch.conf", "r") do |infile|
         while (line = infile.gets)
@@ -58,8 +58,9 @@ def make_conf(parent=nil)
       end
     end
 
-    branch_conf = """push_location = #{parent || @new_resource.repository}
-parent_location = #{parent || @new_resource.repository}"""
+    branch_conf = "parent_location = #{parent || @new_resource.repository}"
+    branch_conf << "\npush_location = #{@new_resource.push_location || parent || @new_resource.repository}"
+    branch_conf << "\npublic_location = #{@new_resource.public_location}" if @new_resource.public_location
     branch_conf << "\nstacked_on_location = #{stack_on_location}" if stack_on_location
     ::File.open("#{@new_resource.destination}/.bzr/branch/branch.conf", 'w') { |f| f.write(branch_conf) }
   end
@@ -107,7 +108,7 @@ def action_checkout(opts)
 
     #NORMAL BRANCH:
     else
-      clone_cmd = "bzr branch --stacked --use-existing-dir #{@new_resource.stacked_on || @new_resource.repository} #{@new_resource.destination}"
+      clone_cmd = "bzr branch --stacked --use-existing-dir #{@new_resource.stacked_on_location || @new_resource.repository} #{@new_resource.destination}"
       #TODO make_conf() ?
       Chef::Log.info(clone_cmd)
       shell_out!(clone_cmd, opts)

@@ -22,7 +22,9 @@ attribute :reference_merge,    :kind_of => [TrueClass, FalseClass] #param to for
 attribute :parent_merge,    :kind_of => [TrueClass, FalseClass]
 attribute :parent_push,    :kind_of => [TrueClass, FalseClass]
 attribute :parent,    :kind_of => String
-attribute :stacked_on,    :kind_of => [String, FalseClass]
+attribute :push_location,  :kind_of => [String, FalseClass]
+attribute :stacked_on_location,    :kind_of => [String, FalseClass]
+attribute :public_location,  :kind_of => [String, FalseClass]
 
 attribute :user,        :kind_of => [String, Integer]
 attribute :group,        :kind_of => [String, Integer]
