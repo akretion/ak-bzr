@@ -45,6 +45,15 @@ def target_dir_non_existent_or_empty?
   !::File.exist?(@new_resource.destination) || Dir.entries(@new_resource.destination).sort == ['.','..']
 end
 
+def make_bzr(branch_alias, branch_url)
+  if branch_alias == "push_location"
+    branch_url.gsub!("lp:", "bzr+ssh://bazaar.launchpad.net/")
+  else
+    branch_url.gsub!("lp:", "http://bazaar.launchpad.net/")
+  end
+  "#{branch_alias} = #{branch_url}\n"
+end
+
 def make_conf(parent=nil)
   if ::File.exist?("#{@new_resource.destination}/.bzr")
     stack_on_location = false
@@ -57,11 +66,10 @@ def make_conf(parent=nil)
         end
       end
     end
-
-    branch_conf = "parent_location = #{parent || @new_resource.repository}"
-    branch_conf << "\npush_location = #{@new_resource.push_location || parent || @new_resource.repository}"
-    branch_conf << "\npublic_location = #{@new_resource.public_location}" if @new_resource.public_location
-    branch_conf << "\nstacked_on_location = #{stack_on_location}" if stack_on_location
+    branch_conf = make_bzr("parent_location", parent || @new_resource.repository)
+    branch_conf << make_bzr("push_location", @new_resource.push_location || parent || @new_resource.repository)
+    branch_conf << make_bzr("public_location", @new_resource.public_location || parent)
+    branch_conf << make_bzr("stacked_on_location", stack_on_location) if stack_on_location
     ::File.open("#{@new_resource.destination}/.bzr/branch/branch.conf", 'w') { |f| f.write(branch_conf) }
   end
 end
