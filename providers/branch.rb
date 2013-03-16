@@ -46,12 +46,16 @@ def target_dir_non_existent_or_empty?
 end
 
 def make_bzr(branch_alias, branch_url)
-  if branch_alias == "push_location"
-    branch_url.gsub!("lp:", "bzr+ssh://bazaar.launchpad.net/")
+  if branch_url
+    if branch_alias == "push_location"
+      branch_url.gsub!("lp:", "bzr+ssh://bazaar.launchpad.net/")
+    else
+      branch_url.gsub!("lp:", "http://bazaar.launchpad.net/")
+    end
+    "#{branch_alias} = #{branch_url}\n"
   else
-    branch_url.gsub!("lp:", "http://bazaar.launchpad.net/")
+    ""
   end
-  "#{branch_alias} = #{branch_url}\n"
 end
 
 def make_conf(parent=nil)
