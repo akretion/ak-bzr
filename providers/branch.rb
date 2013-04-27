@@ -102,7 +102,9 @@ def action_checkout(opts)
       shell_out!("chown -R #{@new_resource.user} #{@new_resource.destination}", opts)
 
     #TARBALL:
-    elsif @new_resource.tarball #eventually we prepared a tarball to speed up the download
+    #eventually we prepared a tarball to speed up the download
+    #Not use with full branch mode
+    elsif not @new_resource.full_branch_location and @new_resource.tarball
       Chef::Log.info("Downloading #{@new_resource.tarball} for bzr branch #{@new_resource.destination}")
       opts[:cwd] = "/tmp"
       if @new_resource.tarball[0..3] == 'http'
@@ -120,7 +122,15 @@ def action_checkout(opts)
 
     #NORMAL BRANCH:
     else
-      clone_cmd = "bzr branch --stacked --use-existing-dir #{@new_resource.stacked_on_location || @new_resource.repository} #{@new_resource.destination}"
+      #If full branch mode, original branch are downloaded in /opt/openerp/branch/ref/VERSION
+      #And server branch are stacked from it
+      if @new_resource.full_branch_location
+        ref_cmd = "bzr branch --use-existing-dir #{@new_resource.stacked_on_location || @new_resource.repository} #{@new_resource.full_branch_location}"
+        Chef::Log.info(ref_cmd)
+        shell_out!(ref_cmd, opts)
+      end
+ 
+      clone_cmd = "bzr branch --stacked --use-existing-dir #{@new_resource.full_branch_location || @new_resource.stacked_on_location || @new_resource.repository} #{@new_resource.destination}"
       #TODO make_conf() ?
       Chef::Log.info(clone_cmd)
       shell_out!(clone_cmd, opts)

@@ -17,6 +17,7 @@ attribute :repository,        :kind_of => String
 attribute :revision,        :kind_of => String
 attribute :autosync,        :kind_of => String #no, weekly, daily...
 attribute :tarball,        :kind_of => [String, FalseClass]
+attribute :full_branch_location,    :kind_of => String
 
 attribute :reference_merge,    :kind_of => [TrueClass, FalseClass] #param to force update
 attribute :parent_merge,    :kind_of => [TrueClass, FalseClass]
