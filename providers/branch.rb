@@ -125,7 +125,12 @@ def action_checkout(opts)
       #If full branch mode, original branch are downloaded in /opt/openerp/branch/ref/VERSION
       #And server branch are stacked from it
       if @new_resource.full_branch_location
-        ref_cmd = "bzr branch --use-existing-dir #{@new_resource.stacked_on_location || @new_resource.repository} #{@new_resource.full_branch_location}"
+        if not ::File.exist?(@new_resource.full_branch_location)
+            Chef::Log.info("Reference branch do not exit download it in #{@new_resource.full_branch_location}")
+            ref_cmd = "bzr branch --use-existing-dir #{@new_resource.stacked_on_location || @new_resource.repository} #{@new_resource.full_branch_location}"
+        else
+            ref_cmd = "cd #{@new_resource.full_branch_location}; bzr pull"
+        end
         Chef::Log.info(ref_cmd)
         shell_out!(ref_cmd, opts)
       end
