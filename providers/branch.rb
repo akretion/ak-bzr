@@ -61,8 +61,8 @@ end
 def make_conf(parent=nil)
   if ::File.exist?("#{@new_resource.destination}/.bzr")
     stack_on_location = false
-    if @new_resource.stacked_on_location
-      stack_on_location = @new_resource.stacked_on_location
+    if @new_resource.stacked_on_location || @new_resource.full_branch_location
+      stack_on_location = @new_resource.full_branch_location || @new_resource.stacked_on_location
     else
       ::File.open("#{@new_resource.destination}/.bzr/branch/branch.conf", "r") do |infile|
         while (line = infile.gets)
