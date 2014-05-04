@@ -1,3 +1,4 @@
+name             "ak-bzr"
 maintainer       "Akretion"
 maintainer_email "contact@akretion.com"
 license          "All rights reserved"
