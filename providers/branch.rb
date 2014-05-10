@@ -193,11 +193,6 @@ action :sync do
   @new_resource.destination = @new_resource.name
   @new_resource.repository, @new_resource.revision = split_repo_rev(@new_resource.repo, @new_resource.revision)
 
-  #update param to force update
-  if @new_resource.reference_merge
-    @new_resource.revision = "HEAD"
-  end
-
   assert_target_directory_valid!
 
   opts = {}

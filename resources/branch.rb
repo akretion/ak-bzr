@@ -19,9 +19,6 @@ attribute :autosync,        :kind_of => String #no, weekly, daily...
 attribute :tarball,        :kind_of => [String, FalseClass]
 attribute :full_branch_location,    :kind_of => [String, FalseClass]
 
-attribute :reference_merge,    :kind_of => [TrueClass, FalseClass] #param to force update
-attribute :parent_merge,    :kind_of => [TrueClass, FalseClass]
-attribute :parent_push,    :kind_of => [TrueClass, FalseClass]
 attribute :parent,    :kind_of => String
 attribute :push_location,  :kind_of => [String, FalseClass]
 attribute :stacked_on_location,    :kind_of => [String, FalseClass]
@@ -45,16 +42,4 @@ end
 
 def revision=(rev)
   @revision = rev
-end
-
-def reference_merge=(ref_merge)
-  @reference_merge = ref_merge
-end
-
-def parent_merge=(parent_merge)
-  @parent_merge = parent_push
-end
-
-def parent_push=(parent_push)
-  @parent_push = parent_push
 end
