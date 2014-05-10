@@ -30,9 +30,10 @@ Usage
 example of ak_bzr_branch resource:
 
 ```ruby
-ak_bzr_branch "#{node[:openerp][:home]}/prod/pt-br-localiz" do
-  repo "lp:openerp.pt-br-localiz#HEAD"
-  action :sync 
+ak_bzr_branch "some_directory" do
+  repo "lp:lp-community-utils"
+  revision 'HEAD'
+  action :sync
   user some_user
   group some_groups
   notifies :run, resources(:execute => "some_service")
