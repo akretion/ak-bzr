@@ -36,7 +36,7 @@ ak_bzr_branch "#{node[:openerp][:home]}/prod/pt-br-localiz" do
   user some_user
   group some_groups
   notifies :run, resources(:execute => "some_service")
-#end
+end
 ```
 
 ### LWRP Attributes
@@ -104,6 +104,8 @@ depends 'ak-bzr'
 
 Now you can use the LWRP in your cookbook!
 
+
+Contributing
 ------------
 1. Fork the project
 2. Create a feature branch corresponding to you change
