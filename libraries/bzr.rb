@@ -6,7 +6,7 @@ require 'fileutils'
 
 # we don't define the provider as a classical LWRP but more as a HWRP
 # because we want to inherit from the standard Chef::Provider
-# and because we want the associated resource to inherit from Chef::Scm
+# and because we want the associated resource to inherit from Chef::Resource::Scm
 # as explained here http://tech.yipit.com/2013/05/09/advanced-chef-writing-heavy-weight-resource-providers-hwrp/
 class Chef
   class Provider
@@ -29,7 +29,7 @@ class Chef
       # however that would break if somebody used bzr revert -r rev_X instead of bzr update -r rev_X ...
       # see https://answers.launchpad.net/bzr/+question/132321
       def find_current_revision
-        Chef::Log.info("#{@new_resource} finding current bzr revision")
+        Chef::Log.debug("#{@new_resource} finding current bzr revision")
         if existing_bzr_clone?
           result = shell_out!('bzr revision-info --tree', :cwd => cwd, :returns => [0,128]).stdout.split(' ')[1]
           revid?(result) ? result : nil
@@ -131,6 +131,7 @@ class Chef
             checkout_tarball(target)
           else # NORMAL BRANCH
             converge_by("checkout ref #{@new_resource.revision} branch #{@new_resource.repository}") do
+
               #If full branch mode, original branch are downloaded in /opt/openerp/branch/ref/VERSION
               #And server branch are stacked from it
               if @new_resource.full_branch_location
@@ -161,10 +162,12 @@ class Chef
         #TODO test if modified/added/removed with bzr status; if yes send email + do nothing
         converge_by("fetch updates for #{@new_resource.repository}") do
 
-          fetch_command = "bzr pull :parent && bzr update -r #{target_revision}" # NOTE we could do --overwrite if some option
+          fetch_command = "bzr pull #{@new_resource.repository} && bzr update -r #{target_revision}" # NOTE we could do --overwrite if some option
           Chef::Log.debug "Fetching updates from #{@new_resource.repo} and resetting to revision #{target_revision}"
           cmd = Mixlib::ShellOut.new(fetch_command, opts_cwd)
           cmd.run_command
+          Chef::Log.info(cmd.stdout)
+          Chef::Log.info(cmd.stderr)
           if cmd.stderr.index('branches have diverged')
             merge_cmd = "bzr merge #{@new_resource.repository}" # NOTE we merge and abandon the target_revision, fair enough?
             Chef::Log.info(merge_cmd)
@@ -184,8 +187,7 @@ class Chef
         assert_target_directory_valid!
 
         if existing_bzr_clone?
-          current_rev = find_current_revision
-          Chef::Log.debug "#{@new_resource} current revision: #{current_rev} target revision: #{target_revision}"
+          Chef::Log.debug "#{@new_resource} current revision: #{@current_resource.revision} target revision: #{target_revision}"
           unless current_revision_matches_target_revision?
             fetch_updates
             Chef::Log.info "#{@new_resource} updated to revision #{target_revision}"
@@ -195,6 +197,8 @@ class Chef
           @new_resource.updated_by_last_action(true)
         end
       end
+
+      private
 
       def opts
         opts = {}
@@ -212,8 +216,9 @@ class Chef
         @new_resource.destination
       end
 
-      protected
-
+      def revid?(string)
+        string =~ /@/
+      end
 
       def make_bzr(branch_alias, branch_url)
         if branch_url
