@@ -23,6 +23,11 @@ Until this eventually becomes a generic bzr provider, we prefer call the
 resource "ak_bzr_branch" rather than say just "bzr" so it won't conflict
 with another possibly more generic bzr provider.
 
+Platforms
+---------
+
+Tested on Ubuntu Lucid+; should work on Debian with no or little effort.
+Contribs welcome to support other Linux platform.
 
 Usage
 -----
