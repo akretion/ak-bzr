@@ -6,6 +6,7 @@ class ::Chef
 
       def initialize(name, run_context=nil)
         super
+        @revision = 'last:1' if @revision == "HEAD"
         @resource_name = :ak_bzr_branch
         @provider = ::Chef::Provider::AkBzr
       end
